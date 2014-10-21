@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="org.eclipse.jdt.ui.CompilationUnitEditor" name="org.eclipse.jdt.ui.CompilationUnitEditor" schema="schema/org.eclipse.jdt.ui.CompilationUnitEditor.exsd"/>
+
+   <extension
+         point="org.eclipse.ui.actionSets">
+      <actionSet
+            label="Sample Action Set"
+            visible="true"
+            id="Test.actionSet">
+         <menu
+               label="Sample &amp;Menu"
+               id="sampleMenu">
+            <separator
+                  name="sampleGroup">
+            </separator>
+         </menu>
+         <action
+               label="&amp;Sample Action"
+               icon="icons/sample.gif"
+               class="test.actions.SampleAction"
+               tooltip="Hello, Eclipse world"
+               menubarPath="sampleMenu/sampleGroup"
+               toolbarPath="sampleGroup"
+               id="test.actions.SampleAction">
+         </action>
+      </actionSet>
+   </extension>
+   <extension id="com.smartCopy.Marker" point="org.eclipse.core.resources.markers" name="Cool Marker"> 
+      <persistent value="true"/> 
+      <super type="org.eclipse.core.resources.problemmarker"/> 
+      <super type="org.eclipse.core.resources.textmarker"/> 
+      <attribute name="owner"/> 
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+   </extension>
+   <extension
+         point="org.eclipse.jdt.ui.javaEditorTextHovers">
+               <hover
+            activate="true"
+            class="test.actions.LangHover"
+            id="id.test.actions.LangHover">
+      </hover>
+   </extension>
+</plugin>
