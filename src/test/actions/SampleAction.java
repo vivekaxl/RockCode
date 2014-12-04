@@ -307,7 +307,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				else if(problem.getID() == IProblem.UndefinedName){
 					System.out.println(problem.getArguments()[0]);
 										if(returnUndeclared.contains(new Variables(problem.getArguments()[0],"","",""))==false)
-											returnUndeclared.add(new Variables(problem.getArguments()[0],"type","","NA"));
+											returnUndeclared.add(new Variables(problem.getArguments()[0],"variable","","NA"));
 				}
 				else{
 					;
@@ -991,13 +991,31 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 					if(element.variableType.contains(e.getReturnType()) == false){
 						element.variableType.add(e.getReturnType());
 						element.packageImport = convertClasstoPackage2(((element.variableType).get(0)).replace(" ",""));	
-						System.out.println(element.name + " , " + element.variableType + " , " + element.packageImport);
+						System.out.println(element.name + " , " + element.variableType + " ,1 " + element.packageImport);
 					}
 				}
 				else if(element.name.equals(e.getVariableName())==true && (e.getReturnType().equals("confused")==true) && (e.getReturnType().equals("unresolved") ==false)){
 					element.variableType=e.getReturnTypeList();
 					//element.packageImport = convertClasstoPackage2(((element.variableType).get(0)).replace(" ",""));	
-					System.out.println(element.name + " , " + element.variableType + " , " + element.packageImport);
+					System.out.println(element.name + " , " + element.variableType + " ,2 " + element.packageImport);
+					String methodName = getVariablesInScope(source, element.name);
+					List<Variables> declaredVariables = getVariablesAndImport(source,methodName );
+					for(Variables i:declaredVariables){
+						//System.out.println("Name: "+i.name + " Type: "+i.variableType + "Looking: "+element.variableType);
+						for(String j:element.variableType){
+						    //System.out.println("b: "+i.variableType.get(0)+ " c: "+ j);
+						    SelectionAlgorithm sTypeDistance = new SelectionAlgorithm();
+						    
+							if(i.variableType.get(0).equals(j)==true || sTypeDistance.isRelated(i.variableType.get(0),j) != 99){
+								System.out.println("Element found: "+i.variableType );
+								element.variableType.clear();
+								element.variableType.add(j);
+								element.packageImport = convertClasstoPackage2(((element.variableType).get(0)).replace(" ",""));	
+								System.out.println(element.name + " , " + element.variableType + " ,21 " + element.packageImport);
+								break;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1179,15 +1197,16 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				return true;
 			}
 			public boolean visit(VariableDeclarationFragment node) {
-				//System.out.println("VariableDeclarationFragment " +node.toString());
+				System.out.println("VariableDeclarationFragment " +node.toString());
 				if(node.resolveBinding() != null){
 					ASTNode temp = (ASTNode)node;
-					//System.out.println(temp.toString());
+					System.out.println(temp.toString());
 					while(temp.getNodeType() != ASTNode.VARIABLE_DECLARATION_STATEMENT){
-						//System.out.println(temp.toString());
+						System.out.println("new Test value: "+ASTNode.VARIABLE_DECLARATION_STATEMENT);
+						System.out.println("new Test: " + temp.toString()+ " node type: "+temp.getNodeType());
 						temp=temp.getParent();
 						//for cases where there are only VariableDeclarationFragments
-						if(temp == null){
+						if(temp.getParent() == null){
 							temp = (ASTNode)node;
 							if(ifExist(returnDeclared, node.getName().toString())==true)
 								returnDeclared.add(new Variables(node.getName().toString(),"variable",((VariableDeclarationFragment)temp).resolveBinding().getType().getQualifiedName(),"","NA",root.getLineNumber(temp.getStartPosition())));
@@ -1195,7 +1214,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 							return false;
 						}
 					}
-					//System.out.println("((VariableDeclarationStatement) temp).getType().toString() : " + ((VariableDeclarationStatement) temp).getType().resolveBinding().getQualifiedName());
+					System.out.println("((VariableDeclarationStatement) temp).getType().toString() : " + ((VariableDeclarationStatement) temp).getType().resolveBinding().getQualifiedName());
 					if(ifExist(returnDeclared, node.getName().toString())==true)
 						returnDeclared.add(new Variables(node.getName().toString(),"variable",((VariableDeclarationStatement) temp).getType().resolveBinding().getQualifiedName(),"","NA",root.getLineNumber(temp.getStartPosition())));
 				}
@@ -1282,7 +1301,7 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 			for(Variables element:SampleAction.undeclaredVariables){
 				if(element.name.equals(focusVariable)==false)
 					continue;
-
+				System.out.println("Variable Name: "+ element.name);
 				List<Variables> rankingList = new ArrayList<Variables>();
 				List<Variables> rankingTypeList = new ArrayList<Variables>();
 				if(element.type == "variable"){
@@ -1391,65 +1410,79 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 		for(int i=0;i<10;i++)
 			System.out.println();
 		
-		return undeclaredVariables;
 		
-//		for(Variables element:undeclaredVariables){
-//			List<Variables> rankingList = new ArrayList<Variables>();
-//			List<Variables> rankingTypeList = new ArrayList<Variables>();
-//			if(element.type == "variable"){
-//				int count=0;
-//				System.out.println("#####################################");
-//				System.out.println("Undeclared Variables: " +element.name + " , " + element.variableType);
-//				List<Variables> declaredVariables =new ArrayList<Variables>(); 
-//				String methodName = getVariablesInScope(source, element.name);
-//				declaredVariables = getVariablesAndImport(source,methodName );
-//				declaredVariables = fillLineNumber(declaredVariables, source);
-//
-//				if(element.variableType.size()==1){
-//					for(Variables e:declaredVariables){
-//						rankingTypeList.add(e);
+		for(Variables element:undeclaredVariables){
+			List<Variables> rankingList = new ArrayList<Variables>();
+			List<Variables> rankingTypeList = new ArrayList<Variables>();
+			if(element.type == "variable"){
+				int count=0;
+				System.out.println("#####################################");
+				System.out.println("Undeclared Variables: " +element.name + " , " + element.variableType);
+				List<Variables> declaredVariables =new ArrayList<Variables>(); 
+				//System.out.println("New: Testing1");
+				String methodName = getVariablesInScope(source, element.name);
+				//System.out.println("New: Testing2");
+				declaredVariables = getVariablesAndImport(source,methodName );
+				//System.out.println("New: Testing3");
+				declaredVariables = fillLineNumber(declaredVariables, source);
+				//System.out.println("New: Testing4");
+
+				if(element.variableType.size()==1){
+					for(Variables e:declaredVariables){
+						//rankingTypeList.add(e);
+						SelectionAlgorithm sTypeD = new SelectionAlgorithm();
+						System.out.println("====================================================");
+						System.out.println("e.variableType.get(0): "+e.variableType.get(0));
+						System.out.println("element.variableType.get(0): "+element.variableType.get(0));
+						System.out.println("sTypeD: "+sTypeD.isRelated(e.variableType.get(0), element.variableType.get(0)));
+						if(sTypeD.isRelated(e.variableType.get(0), element.variableType.get(0)) != 99){
+							rankingList.add(e);
+							count++;							
+						}
 //						if((e.variableType.get(0).replace(" ", "")).equals((element.variableType.get(0)).replace(" ", "")) == true){
 //							rankingList.add(e);
 //							count++;
 //						}
-//					}
-//					if(count==0)
-//						System.out.println("Variable " + element.name +" needs declaration of type " + element.variableType );
-//					else{
-//						SelectionAlgorithm sEditDistance = new SelectionAlgorithm(element, rankingList);
-//						List<RankingSkeleton> editDistance = sEditDistance.editDistance();
-//						SelectionAlgorithm sSemanticDistance = new SelectionAlgorithm(element, rankingList);
-//						List<RankingSkeleton> semanticDistance = sSemanticDistance.semanticDistance();
-//						SelectionAlgorithm sNavigationDistance = new SelectionAlgorithm(element, rankingList);
-//						List<RankingSkeleton> navigationDistance = sNavigationDistance.navigationDistance();
-//						SelectionAlgorithm sTypeDistance = new SelectionAlgorithm(element, rankingTypeList);
-//						List<RankingSkeleton> typeDistance = sTypeDistance.typeDistance();
-//						Object[][] table = list2Table(editDistance,semanticDistance,navigationDistance,typeDistance);
-//						for (final Object[] row : table) {
-//						    System.out.format("%25s%25s%25s%25s%25s\n", row);
-//						}
-//					}
-//						
-//				}
-//				else
-//					System.out.println("Variable " + element.name +" could not be resolved" );
-//			}
-//			else if(element.type == "type" && element.packageImport != "" && element.packageImport != "NA" ){
-//				if(importStatements.contains(element.packageImport) == false)
-//					printImportStatements.add("Add Imports : " +element.packageImport + " "+element.name);
-//			}
-//			else if(element.type == "type")
-//				System.out.println("Type " + element.name + " could not be resolved");
-//		}
-//		System.out.println("#####################################");
-//		System.out.println("Add following imports");
-//		for(String element:printImportStatements)
-//			System.out.println(element);
-//		System.out.println("#####################################");
-//		System.out.println("Consider the following hints");
-//		for(ExpressionCollector element:hints){
-//			System.out.println(element.getConstantExpression() + " might need to be changed in the expression " + element.getExpression());
-//		}
+					}
+					if(count==0)
+						System.out.println("Variable " + element.name +" needs declaration of type " + element.variableType );
+					else{
+						SelectionAlgorithm sEditDistance = new SelectionAlgorithm(element, rankingList);
+						List<RankingSkeleton> editDistance = sEditDistance.editDistance();
+						SelectionAlgorithm sSemanticDistance = new SelectionAlgorithm(element, rankingList);
+						List<RankingSkeleton> semanticDistance = sSemanticDistance.semanticDistance();
+						SelectionAlgorithm sNavigationDistance = new SelectionAlgorithm(element, rankingList);
+						List<RankingSkeleton> navigationDistance = sNavigationDistance.navigationDistance();
+						SelectionAlgorithm sTypeDistance = new SelectionAlgorithm(element,rankingList);//rankingTypeList);
+						List<RankingSkeleton> typeDistance = sTypeDistance.typeDistance();
+						Object[][] table = list2Table(editDistance,semanticDistance,navigationDistance,typeDistance);
+						for (final Object[] row : table) {
+						    System.out.format("%25s%25s%25s%25s%25s\n", row);
+						}
+					}
+						
+				}
+				else
+					System.out.println("Variable " + element.name +" could not be resolved" );
+			}
+			else if(element.type == "type" && element.packageImport != "" && element.packageImport != "NA" ){
+				if(importStatements.contains(element.packageImport) == false)
+					printImportStatements.add("Add Imports : " +element.packageImport + " "+element.name);
+			}
+			else if(element.type == "type")
+				System.out.println("Type " + element.name + " could not be resolved");
+		}
+		System.out.println("#####################################");
+		System.out.println("Add following imports");
+		for(String element:printImportStatements)
+			System.out.println(element);
+		System.out.println("#####################################");
+		System.out.println("Consider the following hints");
+		for(ExpressionCollector element:hints){
+			System.out.println(element.getConstantExpression() + " might need to be changed in the expression " + element.getExpression());
+		}
+
+		return undeclaredVariables;
 	
 	}
 	public static String[][] list2Table(List<RankingSkeleton> editDistance, List<RankingSkeleton> semanticDistance, List<RankingSkeleton> navigationDistance, List<RankingSkeleton> typeDistance){
@@ -1484,10 +1517,10 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 				e.printStackTrace();
 			}
 		
-        MessageDialog.openInformation(
+        /*MessageDialog.openInformation(
                 window.getShell(),
                 "Clipboard data",
-                data);
+                data);*/
 //========================================================== -Find data in the clipboard
 
 //========================================================== +Extract code from editor
@@ -1500,10 +1533,10 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
                     IDocumentProvider prov = editor.getDocumentProvider();
                     IDocument doc = prov.getDocument( editor.getEditorInput() );
                 	newText1 = doc.get();
-                    MessageDialog.openInformation(
+                   /* MessageDialog.openInformation(
                             window.getShell(),
                             "editor",
-                            newText1);
+                            newText1);*/
                     
 //========================================================== -Extract code from editor
                    // getVariables(editor,newText1);

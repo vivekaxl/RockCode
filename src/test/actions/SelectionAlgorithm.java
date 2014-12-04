@@ -37,6 +37,9 @@ public class SelectionAlgorithm {
 	List<Variables> candidateVariables;
 	private Map<Double,Variables> rankedList = new HashMap<Double,Variables>();
 	
+	public SelectionAlgorithm(){
+		
+	}
 	public SelectionAlgorithm(Variables unDeclaredVariables, List<Variables> candidateVariables){
 		this.candidateVariables = new ArrayList();
 		this.unDeclaredVariable = unDeclaredVariables;
@@ -204,7 +207,20 @@ public class SelectionAlgorithm {
 		return convertToList(sortedRankedList);
 	}
 	
-	
+	public int isRelated(String classA, String classB){
+		int result = -1;
+		classA = classA.replace(" ", "");
+		classB = classB.replace(" ", "");
+		if(classA.equals(classB) == true) 
+			return 0;
+		try {
+			result = Math.max(findDistance(changeToInnerClass(classA),changeToInnerClass(classB)),
+					findDistance(changeToInnerClass(classA),changeToInnerClass(classB)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return result;
+	}
 	public int findDistance(String classA, String classB) throws IOException {
     	List<String> superClass = new ArrayList<String>();
     	if(classA.equals(classB)==true)
